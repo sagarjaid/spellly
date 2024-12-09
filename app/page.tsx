@@ -1,101 +1,168 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { getAudioUrl } from '@/utils/unrealSpeech';
+import { PlayCircle } from 'lucide-react';
+
+// Define the expected response structure from the API
+interface GenerateWordResponse {
+  word: string;
+  error?: string;
+}
+
+export default function SpellingGame() {
+  const [currentWord, setCurrentWord] = useState<string>('');
+  const [userInput, setUserInput] = useState<string>('');
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [learnedWords, setLearnedWords] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    loadLearnedWords();
+  }, []);
+
+  const loadLearnedWords = () => {
+    const storedWords = localStorage.getItem('learnedWords');
+    if (storedWords) {
+      try {
+        setLearnedWords(JSON.parse(storedWords));
+      } catch (e) {
+        console.error('Error parsing learned words from localStorage:', e);
+        setLearnedWords([]);
+      }
+    }
+  };
+
+  const saveLearnedWord = (word: string) => {
+    const updatedWords = Array.from(new Set([...learnedWords, word]));
+    // const updatedWords = [...new Set([...learnedWords, word])];
+    setLearnedWords(updatedWords);
+    localStorage.setItem('learnedWords', JSON.stringify(updatedWords));
+  };
+
+  const generateNewWord = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/generate-word', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch word: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data: GenerateWordResponse = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setCurrentWord(data.word.toLowerCase());
+      setUserInput('');
+      setIsCorrect(null);
+      await playWordAudio(data.word);
+    } catch (e) {
+      console.error('Error generating word:', e);
+      setError(
+        `Failed to generate or play a new word: ${
+          e instanceof Error ? e.message : 'Unknown error'
+        }`
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const playWordAudio = async (word: string) => {
+    try {
+      const url = await getAudioUrl(word);
+      setAudioUrl(url);
+      const audio = new Audio(url);
+
+      // Ensure audio playback complies with browser restrictions
+      await audio.play();
+    } catch (e) {
+      console.error('Error playing audio:', e);
+      setError(
+        `Failed to play audio: ${
+          e instanceof Error ? e.message : 'Unknown error'
+        }`
+      );
+    }
+  };
+
+  const replayAudio = () => {
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      audio.play().catch((e) => {
+        console.error('Error replaying audio:', e);
+        setError('Failed to replay audio.');
+      });
+    }
+  };
+
+  const checkSpelling = () => {
+    const correct =
+      userInput.trim().toLowerCase() === currentWord.trim().toLowerCase();
+    setIsCorrect(correct);
+    if (correct) {
+      saveLearnedWord(currentWord);
+      setUserInput(''); // Clear the input box
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className='flex flex-col items-center justify-center min-h-screen bg-gray-100'>
+      <h1 className='text-4xl font-bold mb-8'>Learn Spelling with Audio</h1>
+      <div className='bg-white p-8 rounded-lg shadow-md w-96'>
+        <Button
+          onClick={generateNewWord}
+          className='w-full mb-4'
+          disabled={isLoading}>
+          {isLoading ? 'Generating...' : 'Generate New Word'}
+        </Button>
+        <div className='mb-4 flex'>
+          <Input
+            type='text'
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            placeholder='Type the word you hear'
+            className='flex-grow mr-2'
+          />
+          <Button
+            onClick={replayAudio}
+            className='flex-shrink-0 flex items-center'
+            disabled={!audioUrl}>
+            <PlayCircle className='h-4 w-4 mr-2' />
+            Replay
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <Button
+          onClick={checkSpelling}
+          className='w-full mb-4'>
+          Check Spelling
+        </Button>
+        {isCorrect !== null && (
+          <p
+            className={`text-center ${
+              isCorrect ? 'text-green-600' : 'text-red-600'
+            }`}>
+            {isCorrect ? 'Correct!' : 'Incorrect. Try again!'}
+          </p>
+        )}
+        {error && <p className='text-center text-red-600 mt-4'>{error}</p>}
+      </div>
+      <div className='mt-8'>
+        <h2 className='text-2xl font-semibold mb-4'>Learned Words</h2>
+        <ul className='list-disc pl-5'>
+          {learnedWords.map((word, index) => (
+            <li key={index}>{word}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
