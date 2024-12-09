@@ -20,7 +20,10 @@ export default function SpellingGame() {
   const [error, setError] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isWordRevealed, setIsWordRevealed] = useState<boolean>(false); // State for revealing the word
+  const [isWordRevealed, setIsWordRevealed] = useState<boolean>(false);
+
+  const [englishLevel, setEnglishLevel] = useState<string>('random');
+  const [vocabularyType, setVocabularyType] = useState<string>('random');
 
   useEffect(() => {
     loadLearnedWords();
@@ -48,19 +51,33 @@ export default function SpellingGame() {
     setError(null);
     setIsLoading(true);
     setIsWordRevealed(false); // Hide the word when a new word is generated
+
     try {
       const response = await fetch('/api/generate-word', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Cache-Control': 'no-cache',
         },
+        body: JSON.stringify({
+          englishLevel:
+            englishLevel === 'random'
+              ? 'easy or little difficult or difficult'
+              : englishLevel,
+          vocabularyType:
+            vocabularyType === 'random'
+              ? 'daily, academic and professional'
+              : vocabularyType,
+        }),
         cache: 'no-store',
       });
+
       if (!response.ok) {
         throw new Error(
           `Failed to fetch word: ${response.status} ${response.statusText}`
         );
       }
+
       const data: GenerateWordResponse = await response.json();
       if (data.error) {
         throw new Error(data.error);
@@ -86,7 +103,6 @@ export default function SpellingGame() {
       const url = await getAudioUrl(word);
       setAudioUrl(url);
       const audio = new Audio(url);
-
       // Ensure audio playback complies with browser restrictions
       await audio.play();
     } catch (e) {
@@ -125,9 +141,34 @@ export default function SpellingGame() {
   };
 
   return (
-    <div className='flex flex-col py-20 gap-6 items-center justify-center min-h-screen '>
+    <div className='flex flex-col py-20 gap-6 items-center justify-center min-h-screen'>
       <h1 className='text-2xl font-bold'>Learn Spelling with Audio</h1>
       <div className='bg-white p-8 rounded-lg border w-96'>
+        {/* Dropdowns for settings */}
+        <div className='mb-4 flex flex-col gap-4'>
+          <select
+            value={englishLevel}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setEnglishLevel(e.target.value)
+            }>
+            <option value='random'>English Level: Random</option>
+            <option value='easy'>Easy</option>
+            <option value='little difficult'>Difficult</option>
+            <option value='difficult'>Hard</option>
+          </select>
+
+          <select
+            value={vocabularyType}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setVocabularyType(e.target.value)
+            }>
+            <option value='random'>Setup: Random</option>
+            <option value='daily'>Daily</option>
+            <option value='little academic'>Academic</option>
+            <option value='professional'>Professional</option>
+          </select>
+        </div>
+
         <Button
           onClick={generateNewWord}
           className='w-full mb-4'
@@ -155,8 +196,8 @@ export default function SpellingGame() {
           className='w-full mb-4'>
           Check Spelling
         </Button>
-
         {/* Button to toggle word visibility */}
+
         <Button
           onClick={toggleWordRevealed}
           className='w-full mb-4'
@@ -173,10 +214,11 @@ export default function SpellingGame() {
           </p>
         )}
         {error && <p className='text-center text-red-600 mt-4'>{error}</p>}
-
         {/* Conditionally render the word spelling */}
+
         {isWordRevealed && currentWord && (
           /* eslint-disable-next-line react/no-unescaped-entities */
+
           <p className='text-center mt-4 text-md font-semibold'>
             "{currentWord}"
           </p>
@@ -184,7 +226,8 @@ export default function SpellingGame() {
       </div>
 
       {/* Learned Words section */}
-      <div className=' bg-white p-8 rounded-lg border w-96'>
+
+      <div className='bg-white p-8 rounded-lg border w-96'>
         <h2 className='text-xl font-semibold mb-4'>Learned Words</h2>
         <ul className='list-disc flex gap-6 flex-wrap'>
           {learnedWords.map((word, index) => (

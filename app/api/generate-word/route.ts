@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // Ensure your API key is set in environment variables
@@ -10,8 +10,17 @@ interface ChatResponse {
   word: string;
 }
 
-export async function POST(): Promise<Response> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    // Extract the dropdown values from the request body
+    const { englishLevel = 'easy', vocabularyType = 'daily' } =
+      await req.json();
+
+    // Construct the user prompt dynamically
+    const userPrompt = `Generate a random English word which is most common. Word can be ${englishLevel} used in ${vocabularyType} setup. Avoid using fancy words. Respond in JSON format: {word: chatgpt_random_english_word}`;
+
+    console.log(userPrompt, 'userPrompt');
+
     // Generate text with OpenAI's chat model with additional randomness parameters
     const chatCompletion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -19,12 +28,11 @@ export async function POST(): Promise<Response> {
         {
           role: 'system',
           content:
-            'You are a helpful assistant that generates random English words for a spelling game. Respond with a single word in JSON format.',
+            'You are a helpful assistant that generates random English words for a spelling game where user wants to learn English word spelling. Respond with a single word in JSON format.',
         },
         {
           role: 'user',
-          content:
-            'Generate a random English word which are most common words can be easy or little difficult or difficult but used in daily, academic and professional setup. avoid using fancy words. Respond in JSON format: {word: chatgpt_random_english_word}',
+          content: userPrompt,
         },
       ],
       temperature: 1, // Controls randomness (higher = more random)
@@ -57,17 +65,20 @@ export async function POST(): Promise<Response> {
     const word = parsedResponse.word.trim().toLowerCase();
 
     // Return the response using NextResponse for consistency with Next.js API routes
-    return new NextResponse(JSON.stringify({ word }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store', // Prevent caching
-      },
-    });
+    return NextResponse.json(
+      { word },
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store', // Prevent caching
+        },
+      }
+    );
   } catch (error) {
     console.error('Error generating word:', error);
-    return new NextResponse(
-      JSON.stringify({ error: 'Failed to generate word' }),
+    return NextResponse.json(
+      { error: 'Failed to generate word' },
       {
         status: 500,
         headers: {
