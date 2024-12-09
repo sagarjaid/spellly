@@ -11,7 +11,7 @@ export async function getAudioUrl(word: string): Promise<string> {
       Text: word,
       VoiceId: 'Dan',
       Bitrate: '192k',
-      Speed: '0',
+      Speed: '-0.3',
       Pitch: '1',
       TimestampType: 'sentence',
     }),

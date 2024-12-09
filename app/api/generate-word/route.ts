@@ -24,7 +24,7 @@ export async function POST(): Promise<Response> {
         {
           role: 'user',
           content:
-            'Generate a random English word used in daily or professional setup. Respond in JSON format: {word: chatgpt_random_english_word}',
+            'Generate a random English word which are most common words can be easy or little difficult or difficult but used in daily, academic and professional setup. avoid using fancy words. Respond in JSON format: {word: chatgpt_random_english_word}',
         },
       ],
       temperature: 1, // Controls randomness (higher = more random)
