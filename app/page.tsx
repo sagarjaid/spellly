@@ -5,6 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getAudioUrl } from '@/utils/unrealSpeech';
 import { PlayCircle } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Define the expected response structure from the API
 interface GenerateWordResponse {
@@ -103,7 +112,6 @@ export default function SpellingGame() {
       const url = await getAudioUrl(word);
       setAudioUrl(url);
       const audio = new Audio(url);
-      // Ensure audio playback complies with browser restrictions
       await audio.play();
     } catch (e) {
       console.error('Error playing audio:', e);
@@ -144,29 +152,40 @@ export default function SpellingGame() {
     <div className='flex flex-col py-20 gap-6 items-center justify-center min-h-screen'>
       <h1 className='text-2xl font-bold'>Learn Spelling with Audio</h1>
       <div className='bg-white p-8 rounded-lg border w-96'>
-        {/* Dropdowns for settings */}
         <div className='mb-4 flex flex-col gap-4'>
-          <select
-            value={englishLevel}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-              setEnglishLevel(e.target.value)
-            }>
-            <option value='random'>English Level: Random</option>
-            <option value='easy'>Easy</option>
-            <option value='little difficult'>Difficult</option>
-            <option value='difficult'>Hard</option>
-          </select>
+          <Select
+            defaultValue='random'
+            onValueChange={setEnglishLevel}>
+            <SelectTrigger>
+              <SelectValue placeholder='English Level: Random' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>English Level</SelectLabel>
+                <SelectItem value='random'>Random</SelectItem>
+                <SelectItem value='easy'>Easy</SelectItem>
+                <SelectItem value='little difficult'>Difficult</SelectItem>
+                <SelectItem value='difficult'>Hard</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
 
-          <select
-            value={vocabularyType}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-              setVocabularyType(e.target.value)
-            }>
-            <option value='random'>Setup: Random</option>
-            <option value='daily'>Daily</option>
-            <option value='little academic'>Academic</option>
-            <option value='professional'>Professional</option>
-          </select>
+          <Select
+            defaultValue='random'
+            onValueChange={setVocabularyType}>
+            <SelectTrigger>
+              <SelectValue placeholder='Setup: Random' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Vocabulary Type</SelectLabel>
+                <SelectItem value='random'>Random</SelectItem>
+                <SelectItem value='daily'>Daily</SelectItem>
+                <SelectItem value='academic'>Academic</SelectItem>
+                <SelectItem value='professional'>Professional</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
 
         <Button
@@ -196,8 +215,6 @@ export default function SpellingGame() {
           className='w-full mb-4'>
           Check Spelling
         </Button>
-        {/* Button to toggle word visibility */}
-
         <Button
           onClick={toggleWordRevealed}
           className='w-full mb-4'
@@ -214,18 +231,13 @@ export default function SpellingGame() {
           </p>
         )}
         {error && <p className='text-center text-red-600 mt-4'>{error}</p>}
-        {/* Conditionally render the word spelling */}
-
         {isWordRevealed && currentWord && (
           /* eslint-disable-next-line react/no-unescaped-entities */
-
           <p className='text-center mt-4 text-md font-semibold'>
             "{currentWord}"
           </p>
         )}
       </div>
-
-      {/* Learned Words section */}
 
       <div className='bg-white p-8 rounded-lg border w-96'>
         <h2 className='text-xl font-semibold mb-4'>Learned Words</h2>

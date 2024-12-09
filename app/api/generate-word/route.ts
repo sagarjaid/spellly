@@ -19,7 +19,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Construct the user prompt dynamically
     const userPrompt = `Generate a random new English word each time. Word can be ${englishLevel} used in ${vocabularyType} setup. Avoid using fancy words. Respond in JSON format: {word: chatgpt_random_english_word}`;
 
-    console.log(userPrompt, 'userPrompt');
+    // console.log(userPrompt, 'userPrompt');
 
     // Generate text with OpenAI's chat model with additional randomness parameters
     const chatCompletion = await openai.chat.completions.create({
