@@ -121,7 +121,7 @@ export default function SpellingGame() {
 
   return (
     <div className='flex flex-col items-center justify-center min-h-screen bg-gray-100'>
-      <h1 className='text-4xl font-bold mb-8'>Learn Spelling with Audio</h1>
+      <h1 className='text-2xl font-bold mb-8'>Learn Spelling with Audio</h1>
       <div className='bg-white p-8 rounded-lg shadow-md w-96'>
         <Button
           onClick={generateNewWord}
@@ -161,7 +161,7 @@ export default function SpellingGame() {
         {error && <p className='text-center text-red-600 mt-4'>{error}</p>}
       </div>
       <div className='mt-8'>
-        <h2 className='text-2xl font-semibold mb-4'>Learned Words</h2>
+        <h2 className='text-xl font-semibold mb-4'>Learned Words</h2>
         <ul className='list-disc pl-5'>
           {learnedWords.map((word, index) => (
             <li key={index}>{word}</li>

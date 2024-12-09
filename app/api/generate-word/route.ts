@@ -10,7 +10,7 @@ interface ChatResponse {
   word: string;
 }
 
-export async function POST(req: Request): Promise<Response> {
+export async function POST(): Promise<Response> {
   try {
     // Generate text with OpenAI's chat model with additional randomness parameters
     const chatCompletion = await openai.chat.completions.create({
