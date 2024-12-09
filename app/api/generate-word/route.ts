@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { NextResponse } from 'next/server';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // Ensure your API key is set in environment variables
@@ -9,9 +10,9 @@ interface ChatResponse {
   word: string;
 }
 
-export async function GET(): Promise<Response> {
+export async function POST(req: Request): Promise<Response> {
   try {
-    // Generate text with OpenAI's chat model
+    // Generate text with OpenAI's chat model with additional randomness parameters
     const chatCompletion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
@@ -27,6 +28,9 @@ export async function GET(): Promise<Response> {
         },
       ],
       temperature: 1, // Controls randomness (higher = more random)
+      top_p: 1, // Ensure full randomness in output (nucleus sampling)
+      frequency_penalty: 0.5, // Avoid repetition in outputs
+      presence_penalty: 0.5, // Encourage diversity in the word generation
     });
 
     // Extract the response content
@@ -52,15 +56,25 @@ export async function GET(): Promise<Response> {
 
     const word = parsedResponse.word.trim().toLowerCase();
 
-    // Return the response
-    return new Response(JSON.stringify({ word }), {
-      headers: { 'Content-Type': 'application/json' },
+    // Return the response using NextResponse for consistency with Next.js API routes
+    return new NextResponse(JSON.stringify({ word }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store', // Prevent caching
+      },
     });
   } catch (error) {
     console.error('Error generating word:', error);
-    return new Response(JSON.stringify({ error: 'Failed to generate word' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new NextResponse(
+      JSON.stringify({ error: 'Failed to generate word' }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store', // Prevent caching
+        },
+      }
+    );
   }
 }

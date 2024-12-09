@@ -49,7 +49,7 @@ export default function SpellingGame() {
     setIsLoading(true);
     try {
       const response = await fetch('/api/generate-word', {
-        method: 'GET', // or 'POST' depending on your API method
+        method: 'POST', // or 'POST' depending on your API method
         headers: {
           'Cache-Control': 'no-cache', // Disable caching
         },
@@ -115,6 +115,7 @@ export default function SpellingGame() {
     if (correct) {
       saveLearnedWord(currentWord);
       setUserInput(''); // Clear the input box
+      generateNewWord();
     }
   };
 
