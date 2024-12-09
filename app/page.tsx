@@ -48,27 +48,31 @@ export default function SpellingGame() {
     setError(null);
     setIsLoading(true);
     try {
-      const response = await fetch('/api/generate-word', { cache: 'no-store' });
+      const response = await fetch('/api/generate-word', {
+        method: 'GET', // or 'POST' depending on your API method
+        headers: {
+          'Cache-Control': 'no-cache', // Disable caching
+        },
+        cache: 'no-store', // Ensures the browser doesn't cache the response (alternative to 'no-cache')
+      });
       if (!response.ok) {
         throw new Error(
           `Failed to fetch word: ${response.status} ${response.statusText}`
         );
       }
-
       const data: GenerateWordResponse = await response.json();
       if (data.error) {
         throw new Error(data.error);
       }
-
       setCurrentWord(data.word.toLowerCase());
       setUserInput('');
       setIsCorrect(null);
       await playWordAudio(data.word);
-    } catch (e) {
-      console.error('Error generating word:', e);
+    } catch (error) {
+      console.error('Error generating word:', error);
       setError(
         `Failed to generate or play a new word: ${
-          e instanceof Error ? e.message : 'Unknown error'
+          error instanceof Error ? error.message : String(error)
         }`
       );
     } finally {
