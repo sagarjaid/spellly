@@ -17,13 +17,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       await req.json();
 
     // Construct the user prompt dynamically
-    const userPrompt = `Generate a random English word which is most common. Word can be ${englishLevel} used in ${vocabularyType} setup. Avoid using fancy words. Respond in JSON format: {word: chatgpt_random_english_word}`;
+    const userPrompt = `Generate a random new English word each time. Word can be ${englishLevel} used in ${vocabularyType} setup. Avoid using fancy words. Respond in JSON format: {word: chatgpt_random_english_word}`;
 
     console.log(userPrompt, 'userPrompt');
 
     // Generate text with OpenAI's chat model with additional randomness parameters
     const chatCompletion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4',
       messages: [
         {
           role: 'system',
